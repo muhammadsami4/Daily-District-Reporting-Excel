@@ -1,5 +1,8 @@
 Django>=4.2,<5.3
 pandas>=2.0
 openpyxl>=3.1
+gunicorn>=22.0
+whitenoise>=6.7
+psycopg[binary]>=3.2
 # Only needed when you switch to PostgreSQL (see README):
 # psycopg[binary]>=3.1

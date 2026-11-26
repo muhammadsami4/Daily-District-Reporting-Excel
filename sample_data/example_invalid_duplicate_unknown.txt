@@ -1,0 +1,10 @@
+24-11-2026
+Located Total: 23
+Rawalpindi: 1
+Chakwal: 5
+Chakwal: 5
+Gujranwala: 12
+Atlantis: 5
+Released Total: -1
+UnderProcess: 3
+Lahore: -3

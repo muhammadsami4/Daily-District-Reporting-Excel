@@ -1,0 +1,9 @@
+{# expects `issues` (list of Issue) #}
+{% for i in issues %}
+  <div class="issue issue-{{ i.level }}">
+    <i class="bi {% if i.level == 'error' %}bi-x-octagon-fill{% elif i.level == 'warning' %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+    <span>{{ i.message }}</span>
+  </div>
+{% empty %}
+  <div class="issue issue-ok"><i class="bi bi-check-circle-fill"></i> <span>No issues found.</span></div>
+{% endfor %}

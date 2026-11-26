@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}District Statistics{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">District statistics</h1>
+<form method="get" class="card mb-3"><div class="card-body row g-2 align-items-end">
+  <div class="col-6 col-md-2"><label class="form-label small">From</label><input type="date" name="date_from" class="form-control form-control-sm" value="{{ filters.date_from }}"></div>
+  <div class="col-6 col-md-2"><label class="form-label small">To</label><input type="date" name="date_to" class="form-control form-control-sm" value="{{ filters.date_to }}"></div>
+  <div class="col-6 col-md-3"><label class="form-label small">Chart category</label>
+    <select name="category" class="form-select form-select-sm">{% for c in categories %}<option value="{{ c.code }}" {% if c.code == chart_code %}selected{% endif %}>{{ c.label }}</option>{% endfor %}</select></div>
+  <div class="col-6 col-md-3"><label class="form-label small">Daily trend for district</label>
+    <select name="district" class="form-select form-select-sm"><option value="">—</option>{% for d in districts %}<option value="{{ d.id }}" {% if filters.district == d.id %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>
+  <div class="col-12 col-md-2"><button class="btn btn-sm btn-primary">Apply</button></div>
+</div></form>
+<p class="text-muted">Sums over {{ report_count }} report{{ report_count|pluralize }}{% if filters.date_from or filters.date_to %} in the selected period{% endif %}.</p>
+<div class="row g-3 mb-3">
+  <div class="col-xl-6"><div class="card h-100"><div class="card-header">{{ chart_label }} by district</div><div class="card-body"><div class="chart-box">
+    {% if bar_chart.labels %}<canvas data-source="bar-data" data-type="bar"></canvas>{% else %}<p class="text-muted">No figures in this period.</p>{% endif %}</div></div></div></div>
+  {% if trend_chart %}<div class="col-xl-6"><div class="card h-100"><div class="card-header">{{ chart_label }} – {{ trend_district.name }} by day</div><div class="card-body"><div class="chart-box">
+    <canvas data-source="trend-data" data-type="line"></canvas></div></div></div></div>{% endif %}
+</div>
+<div class="card"><div class="table-responsive"><table class="table table-sm table-hover align-middle mb-0">
+  <thead><tr><th>District</th>{% for c in categories %}<th class="text-center">{{ c.label }}</th>{% endfor %}<th class="text-center">All</th></tr></thead>
+  <tbody>{% for r in rows %}<tr><td>{{ r.district.name }}</td>{% for v in r.values %}<td class="text-center {% if not v %}text-muted{% endif %}">{{ v }}</td>{% endfor %}<td class="text-center fw-bold">{{ r.total }}</td></tr>
+  {% empty %}<tr><td colspan="20" class="text-center text-muted py-4">No data.</td></tr>{% endfor %}</tbody>
+  <tfoot><tr class="table-light fw-bold"><td>Total</td>{% for t in totals %}<td class="text-center">{{ t }}</td>{% endfor %}<td></td></tr></tfoot>
+</table></div></div>
+{{ bar_chart|json_script:"bar-data" }}
+{% if trend_chart %}{{ trend_chart|json_script:"trend-data" }}{% endif %}
+{% endblock %}
+{% block scripts %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><script src="{% static 'reports/charts.js' %}"></script>{% endblock %}

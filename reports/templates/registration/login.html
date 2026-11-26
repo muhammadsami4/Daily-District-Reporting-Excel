@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block anon %}
+<div class="login-wrap">
+  <div class="card shadow-sm login-card">
+    <div class="card-body p-4">
+      <h1 class="h4 mb-1"><i class="bi bi-file-earmark-bar-graph"></i> Daily District Reporting</h1>
+      <p class="text-muted">Sign in to continue</p>
+      {% if form.errors %}<div class="alert alert-danger py-2">Incorrect username or password.</div>{% endif %}
+      <form method="post">{% csrf_token %}
+        <div class="mb-3"><label class="form-label" for="id_username">Username</label>
+          <input type="text" name="username" id="id_username" class="form-control" autofocus required autocomplete="username"></div>
+        <div class="mb-3"><label class="form-label" for="id_password">Password</label>
+          <input type="password" name="password" id="id_password" class="form-control" required autocomplete="current-password"></div>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button class="btn btn-primary w-100">Sign in</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

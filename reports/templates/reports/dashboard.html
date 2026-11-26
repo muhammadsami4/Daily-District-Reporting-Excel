@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Dashboard</h1>
+  {% if can_edit %}<a class="btn btn-primary" href="{% url 'reports:new' %}"><i class="bi bi-plus-lg"></i> New daily report</a>{% endif %}
+</div>
+{% if not latest %}
+  <div class="card"><div class="card-body text-center py-5">
+    <i class="bi bi-inbox display-4 text-muted"></i>
+    <p class="lead mt-3">No reports have been saved yet.</p>
+    {% if can_edit %}<a class="btn btn-primary" href="{% url 'reports:new' %}">Enter the first daily report</a>{% endif %}
+  </div></div>
+{% else %}
+<p class="text-muted">Latest report: <a href="{% url 'reports:detail' latest.pk %}"><strong>{{ latest.report_date|date:"d-m-Y" }}</strong></a>
+  · {{ reporting_districts }} of {{ active_districts }} districts reported figures · {{ report_count }} report{{ report_count|pluralize }} stored</p>
+<div class="row g-3 mb-4">
+  {% for c in cards %}
+  <div class="col-6 col-md-4 col-xl-2"><div class="card stat-card h-100"><div class="card-body">
+    <div class="stat-label">Total {{ c.label }}</div>
+    <div class="stat-value">{{ c.latest }}</div>
+    <div class="small text-muted">all time: {{ c.all_time }}</div>
+  </div></div></div>
+  {% endfor %}
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-xl-7"><div class="card h-100"><div class="card-header">Daily activity (last {{ trend_chart.labels|length }} reports)</div>
+    <div class="card-body"><div class="chart-box"><canvas id="trendChart" data-source="trend-data" data-type="line"></canvas></div></div></div></div>
+  <div class="col-xl-5"><div class="card h-100"><div class="card-header">District-wise, latest report</div>
+    <div class="card-body"><div class="chart-box">{% if district_chart.labels %}<canvas id="districtChart" data-source="district-data" data-type="stacked"></canvas>{% else %}<p class="text-muted">All districts are zero in the latest report.</p>{% endif %}</div></div></div></div>
+</div>
+<div class="card"><div class="card-header">Previous reports</div>
+  <div class="table-responsive"><table class="table table-hover table-sm mb-0 align-middle">
+    <thead><tr><th>Date</th>{% for c in categories %}<th class="text-center">{{ c.label }}</th>{% endfor %}<th></th></tr></thead>
+    <tbody>{% for r in previous_reports %}<tr>
+      <td><a href="{% url 'reports:detail' r.report.pk %}">{{ r.report.report_date|date:"d-m-Y" }}</a>{% if r.report.revision > 1 %} <span class="badge text-bg-warning">rev {{ r.report.revision }}</span>{% endif %}</td>
+      {% for v in r.values %}<td class="text-center">{{ v }}</td>{% endfor %}
+      <td class="text-end"><a class="btn btn-sm btn-outline-success" href="{% url 'reports:excel' r.report.pk %}"><i class="bi bi-file-earmark-excel"></i> Excel</a></td></tr>{% endfor %}</tbody>
+  </table></div></div>
+{{ trend_chart|json_script:"trend-data" }}
+{{ district_chart|json_script:"district-data" }}
+{% endif %}
+{% endblock %}
+{% block scripts %}{% if latest %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="{% static 'reports/charts.js' %}"></script>{% endif %}{% endblock %}

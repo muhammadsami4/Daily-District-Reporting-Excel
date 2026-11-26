@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Date Comparison{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Date comparison</h1>
+<form method="get" class="card mb-3"><div class="card-body row g-2 align-items-end">
+  <div class="col-6 col-md-3"><label class="form-label small">Report A (earlier)</label>
+    <select name="a" class="form-select form-select-sm" required><option value="">Select…</option>{% for r in reports %}<option value="{{ r.report_date|date:'Y-m-d' }}" {% if a == r.report_date|date:'Y-m-d' %}selected{% endif %}>{{ r.report_date|date:"d-m-Y" }}</option>{% endfor %}</select></div>
+  <div class="col-6 col-md-3"><label class="form-label small">Report B (later)</label>
+    <select name="b" class="form-select form-select-sm" required><option value="">Select…</option>{% for r in reports %}<option value="{{ r.report_date|date:'Y-m-d' }}" {% if b == r.report_date|date:'Y-m-d' %}selected{% endif %}>{{ r.report_date|date:"d-m-Y" }}</option>{% endfor %}</select></div>
+  <div class="col-12 col-md-2"><button class="btn btn-sm btn-primary">Compare</button></div>
+</div></form>
+{% if report_a %}
+<div class="card mb-3"><div class="card-header">Totals: {{ report_a.report_date|date:"d-m-Y" }} vs {{ report_b.report_date|date:"d-m-Y" }}</div>
+  <div class="table-responsive"><table class="table table-sm mb-0 align-middle">
+    <thead><tr><th>Category</th><th class="text-end">A</th><th class="text-end">B</th><th class="text-end">Change</th></tr></thead>
+    <tbody>{% for t in totals %}<tr><td>{{ t.category.label }}</td><td class="text-end">{{ t.a }}</td><td class="text-end">{{ t.b }}</td>
+      <td class="text-end fw-bold {% if t.delta > 0 %}text-success{% elif t.delta < 0 %}text-danger{% endif %}">{% if t.delta > 0 %}+{% endif %}{{ t.delta }}</td></tr>{% endfor %}</tbody></table></div></div>
+<form method="get" class="mb-2 d-flex align-items-center gap-2"><input type="hidden" name="a" value="{{ a }}"><input type="hidden" name="b" value="{{ b }}">
+  <label class="small">District detail for</label>
+  <select name="category" class="form-select form-select-sm w-auto" onchange="this.form.submit()">{% for c in categories %}<option value="{{ c.code }}" {% if c.code == category_code %}selected{% endif %}>{{ c.label }}</option>{% endfor %}</select></form>
+<div class="card"><div class="table-responsive"><table class="table table-sm table-hover align-middle mb-0">
+  <thead><tr><th>District</th><th class="text-end">{{ report_a.report_date|date:"d-m-Y" }}</th><th class="text-end">{{ report_b.report_date|date:"d-m-Y" }}</th><th class="text-end">Change</th><th class="text-end">%</th></tr></thead>
+  <tbody>{% for r in rows %}<tr><td>{{ r.district.name }}</td><td class="text-end">{{ r.a }}</td><td class="text-end">{{ r.b }}</td>
+    <td class="text-end fw-bold {% if r.delta > 0 %}text-success{% elif r.delta < 0 %}text-danger{% else %}text-muted{% endif %}">{% if r.delta > 0 %}+{% endif %}{{ r.delta }}</td>
+    <td class="text-end text-muted">{% if r.pct is None %}—{% else %}{{ r.pct }}%{% endif %}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endif %}
+{% endblock %}

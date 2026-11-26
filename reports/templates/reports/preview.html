@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Review report{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">{% if revising %}Revise report{% else %}Review &amp; confirm report{% endif %}</h1>
+  <a class="btn btn-sm btn-outline-secondary" href="{% url 'reports:new' %}"><i class="bi bi-arrow-left"></i> Back to text entry</a>
+</div>
+
+<form method="post" id="preview-form">{% csrf_token %}
+<div class="row g-3 mb-3">
+  <div class="col-lg-4">
+    <div class="card h-100"><div class="card-body">
+      <label class="form-label" for="report_date">Reporting date</label>
+      <input type="date" id="report_date" name="report_date" class="form-control" value="{{ report_date }}" required>
+      {% if existing %}
+      <div class="alert alert-warning mt-3 mb-0 small">
+        <strong>A report for this date already exists</strong> (revision {{ existing.revision }}). Saving creates revision {{ existing.revision|add:1 }}; the old figures stay in the revision history.
+        <div class="form-check mt-2"><input class="form-check-input" type="checkbox" name="confirm_revision" id="confirm_revision">
+          <label class="form-check-label" for="confirm_revision">I confirm this is an authorised correction</label></div>
+        <input type="text" name="reason" class="form-control form-control-sm mt-2" maxlength="300" placeholder="Reason for the change (required)" value="{{ reason }}">
+      </div>{% endif %}
+    </div></div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-header">Validation
+        {% if has_errors %}<span class="badge text-bg-danger float-end">Not ready – fix errors</span>
+        {% else %}<span class="badge text-bg-success float-end">Ready to save</span>{% endif %}</div>
+      <div class="card-body issue-list">{% include "reports/_issues.html" with issues=issues %}</div>
+    </div>
+  </div>
+</div>
+
+{% if unresolved %}
+<div class="card border-warning mb-3"><div class="card-header bg-warning-subtle">Unrecognised lines – choose what to do with each</div>
+  <div class="table-responsive"><table class="table table-sm align-middle mb-0">
+    <thead><tr><th>Line</th><th>Text</th><th>Category</th><th>Value</th><th>Assign to district</th></tr></thead><tbody>
+    {% for u in unresolved %}<tr><td>{{ u.line_no }}</td><td>{{ u.raw_name }}</td><td>{{ u.category_label }}</td><td>{{ u.value }}</td>
+      <td><select class="form-select form-select-sm" name="map__{{ u.idx }}">
+        <option value="">— decide later (blocks saving) —</option>
+        {% for d in districts %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}
+        <option value="discard">Discard this line</option></select></td></tr>{% endfor %}
+  </tbody></table></div></div>
+{% endif %}
+
+<div class="card mb-3">
+  <div class="card-header">District figures <span class="text-muted small">– edit any value, then press “Re-validate”</span></div>
+  <div class="table-responsive grid-wrap">
+    <table class="table table-sm table-bordered align-middle grid-table mb-0">
+      <thead><tr><th>#</th><th>District</th>
+        {% for col in columns %}<th class="text-center">{{ col.label }}<div class="small text-muted fw-normal">{{ col.excel_header }}</div>
+          {% if not col.confirmed %}<span class="badge text-bg-warning">mapping unconfirmed</span>{% endif %}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for row in rows %}<tr><td class="text-muted">{{ forloop.counter }}</td><td class="district-cell">{{ row.district.name }}</td>
+        {% for cell in row.cells %}<td><input type="number" min="0" step="1" inputmode="numeric" name="{{ cell.name }}" value="{{ cell.value }}"
+          data-cat="{{ cell.code }}" class="form-control form-control-sm text-center cell-input{% if cell.bad %} is-invalid{% endif %}"></td>{% endfor %}</tr>
+      {% endfor %}</tbody>
+      <tfoot>
+        <tr class="table-light fw-bold"><td colspan="2">Sum of districts</td>{% for col in columns %}<td class="text-center" id="sum-{{ col.code }}">{{ col.sum }}</td>{% endfor %}</tr>
+        <tr><td colspan="2" class="fw-bold">Declared total (from the text)</td>{% for col in columns %}<td>
+          <input type="number" min="0" step="1" name="{{ col.declared_name }}" id="declared-{{ col.code }}" value="{{ col.declared }}" data-cat="{{ col.code }}"
+            class="form-control form-control-sm text-center declared-input" placeholder="—"></td>{% endfor %}</tr>
+        <tr><td colspan="2" class="fw-bold">Check</td>{% for col in columns %}<td class="text-center" id="status-{{ col.code }}"></td>{% endfor %}</tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+{% if parse_issues %}
+<details class="mb-3"><summary class="small text-muted">Extraction log – what the parser found in the pasted text</summary>
+  <div class="mt-2">{% include "reports/_issues.html" with issues=parse_issues %}</div></details>
+{% endif %}
+
+<div class="d-flex flex-wrap gap-2 sticky-actions">
+  <button name="action" value="revalidate" class="btn btn-outline-primary"><i class="bi bi-shield-check"></i> Re-validate</button>
+  <button name="action" value="save" class="btn btn-success" {% if has_errors %}disabled{% endif %}><i class="bi bi-check2-circle"></i> Confirm &amp; Save</button>
+  <button name="action" value="save_download" class="btn btn-success" {% if has_errors %}disabled{% endif %}><i class="bi bi-file-earmark-excel"></i> Confirm &amp; Download Excel</button>
+  <button type="submit" form="discard-form" class="btn btn-outline-danger ms-auto"><i class="bi bi-trash"></i> Discard draft</button>
+</div>
+{% if has_errors %}<p class="small text-muted mt-2">Saving is disabled while there are errors. After correcting values, press <strong>Re-validate</strong>.</p>{% endif %}
+</form>
+<form method="post" action="{% url 'reports:discard' %}" id="discard-form" onsubmit="return confirm('Discard this draft?');">{% csrf_token %}</form>
+{% endblock %}
+{% block scripts %}<script src="{% static 'reports/preview.js' %}"></script>{% endblock %}

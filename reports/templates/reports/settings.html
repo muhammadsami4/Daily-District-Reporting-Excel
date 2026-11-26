@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Settings</h1>
+<div class="card mb-3"><div class="card-header">Category → Excel column mapping</div>
+  <div class="table-responsive"><table class="table table-sm align-middle mb-0">
+    <thead><tr><th>Text heading (web app)</th><th>Excel column</th><th>Also accepted in text</th><th>Status</th></tr></thead>
+    <tbody>{% for c in categories %}<tr><td>{{ c.label }}</td><td><code>{{ c.excel_header }}</code></td><td class="small text-muted">{{ c.aliases }}</td>
+      <td>{% if c.mapping_confirmed %}<span class="badge text-bg-success">Confirmed</span>{% else %}<span class="badge text-bg-warning">Needs confirmation</span>
+        {% if user.is_superuser %}<form method="post" action="{% url 'reports:confirm_mapping' c.code %}" class="d-inline ms-2">{% csrf_token %}
+          <button class="btn btn-sm btn-outline-success">Confirm mapping</button></form>{% else %}<span class="small text-muted ms-2">An administrator must confirm it.</span>{% endif %}{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <div class="card-footer small text-muted">Figures cannot be saved in an unconfirmed column. “Taken by LEA → Arrested by LEA” starts unconfirmed, as requested. Other spellings can be edited in the <a href="{% url 'admin:reports_reportcategory_changelist' %}">admin site</a>.</div></div>
+
+<div class="card mb-3"><div class="card-header">District master list ({{ districts|length }})</div>
+  <div class="table-responsive" style="max-height:420px"><table class="table table-sm mb-0">
+    <thead class="sticky-top bg-white"><tr><th>#</th><th>District (Excel order)</th><th>Other accepted spellings</th><th>Active</th></tr></thead>
+    <tbody>{% for d in districts %}<tr><td>{{ d.sort_order }}</td><td>{{ d.name }}</td><td class="small text-muted">{{ d.aliases }}</td><td>{% if d.is_active %}Yes{% else %}No{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+  {% if user.is_superuser %}<div class="card-footer small"><a href="{% url 'admin:reports_district_changelist' %}">Edit spellings / add districts in the admin site</a></div>{% endif %}</div>
+
+<div class="card"><div class="card-header">System</div><div class="card-body small">
+  Database: <strong>{{ db_engine }}</strong> · {{ report_count }} stored report{{ report_count|pluralize }}.<br>
+  Backup: run <code>python manage.py backup_data</code> (see README for restore).</div></div>
+{% endblock %}

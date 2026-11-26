@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}New Daily Report{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">New daily report</h1>
+<div class="row g-3">
+  <div class="col-xl-8">
+    <form method="post" class="card"><div class="card-body">{% csrf_token %}
+      <div class="mb-3" style="max-width:240px">
+        <label class="form-label" for="report_date">Reporting date</label>
+        <input type="date" class="form-control" id="report_date" name="report_date" value="{{ report_date }}">
+        <div class="form-text">Optional if the text starts with a date such as 24-11-2026.</div>
+      </div>
+      <label class="form-label" for="raw_text">Daily report text</label>
+      <textarea class="form-control report-text" id="raw_text" name="raw_text" rows="20" spellcheck="false"
+        placeholder="24-11-2026&#10;&#10;Located Total: 23&#10;&#10;Rawalpindi: 1&#10;Chakwal: 5&#10;Gujranwala: 17&#10;&#10;Released Total: 2&#10;&#10;Attock: 02">{{ raw_text }}</textarea>
+      <div class="d-flex flex-wrap gap-2 mt-3">
+        <button name="action" value="process" class="btn btn-primary"><i class="bi bi-gear"></i> Process Report</button>
+        <button name="action" value="preview" class="btn btn-outline-primary"><i class="bi bi-table"></i> Preview Data</button>
+        <button name="action" value="validate" class="btn btn-outline-secondary"><i class="bi bi-shield-check"></i> Validate Data</button>
+      </div>
+      <div class="form-text mt-2">Nothing is saved at this stage. <em>Process</em> and <em>Preview</em> open the editable preview; <em>Validate</em> only shows the checks below.</div>
+    </div></form>
+  </div>
+  <div class="col-xl-4">
+    {% if issues is not None %}
+    <div class="card mb-3"><div class="card-header">Validation result
+      {% if has_errors %}<span class="badge text-bg-danger float-end">Errors</span>{% else %}<span class="badge text-bg-success float-end">OK</span>{% endif %}</div>
+      <div class="card-body">{% include "reports/_issues.html" with issues=issues %}</div></div>
+    {% if extraction %}<div class="card mb-3"><div class="card-header">What the parser found</div>
+      <div class="card-body">{% include "reports/_issues.html" with issues=extraction %}</div></div>{% endif %}
+    {% endif %}
+    <div class="card"><div class="card-header">Accepted format</div><div class="card-body small">
+      <pre class="mb-2">24-11-2026
+Located Total: 23
+Rawalpindi: 1
+Released Total: 2
+Attock: 02
+UnderProcess: 28
+T.T.Singh: 2</pre>
+      <ul class="mb-0 ps-3">
+        <li>Date as DD-MM-YYYY.</li>
+        <li>Headings: Located, Released, Deported, UnderProcess, Returned, Taken by LEA.</li>
+        <li>Spacing, blank lines, full stops and capitals don't matter.</li>
+        <li>Missing categories count as zero.</li>
+        <li>Totals must equal the sum of the districts; figures are never adjusted for you.</li>
+      </ul></div></div>
+  </div>
+</div>
+{% endblock %}
